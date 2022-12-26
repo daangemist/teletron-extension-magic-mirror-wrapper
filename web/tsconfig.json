@@ -1,0 +1,12 @@
+{
+  "extends": "@tsconfig/node18-strictest",
+  "compilerOptions": {
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "lib": ["DOM"]
+  },
+  "include": ["src/**/*", "./node_modules/microbundle/index.d.ts"]
+}

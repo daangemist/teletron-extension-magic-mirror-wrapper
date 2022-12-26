@@ -1,0 +1,110 @@
+/** This file wraps some default magicmirror classes 
+ * from https://github.com/MichMich/MagicMirror/blob/master/css/main.css,
+ *  prefixed with the mm-module class.
+ */
+
+ .mm-module {
+  --color-text: #999;
+  --color-text-dimmed: #666;
+  --color-text-bright: #fff;
+  --color-background: #000;
+
+  --font-primary: "Roboto Condensed";
+  --font-secondary: "Roboto";
+
+  --font-size: 20px;
+  --font-size-small: 0.75rem;
+
+  --gap-body-top: 60px;
+  --gap-body-right: 60px;
+  --gap-body-bottom: 60px;
+  --gap-body-left: 60px;
+
+  --gap-modules: 30px;
+}
+
+
+ .mm-module .dimmed {
+    color: #666;
+  }
+  
+  .mm-module .normal {
+    color: #999;
+  }
+  
+  .mm-module .bright {
+    color: #fff;
+  }
+  
+  .mm-module .xsmall {
+    font-size: 15px;
+    line-height: 20px;
+  }
+  
+  .mm-module .small {
+    font-size: 20px;
+    line-height: 25px;
+  }
+  
+  .mm-module .medium {
+    font-size: 30px;
+    line-height: 35px;
+  }
+  
+  .mm-module .large {
+    font-size: 65px;
+    line-height: 65px;
+  }
+  
+  .mm-module .xlarge {
+    font-size: 75px;
+    line-height: 75px;
+    letter-spacing: -3px;
+  }
+  
+  .mm-module .thin {
+    font-family: Roboto, sans-serif;
+    font-weight: 100;
+  }
+  
+  .mm-module .light {
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 300;
+  }
+  
+  .mm-module .regular {
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 400;
+  }
+  
+  .mm-module .bold {
+    font-family: "Roboto Condensed", sans-serif;
+    font-weight: 700;
+  }
+  
+  .mm-module .align-right {
+    text-align: right;
+  }
+  
+  .mm-module .align-left {
+    text-align: left;
+  }
+  
+  .mm-module header {
+    text-transform: uppercase;
+    font-size: 15px;
+    font-family: "Roboto Condensed", Arial, Helvetica, sans-serif;
+    font-weight: 400;
+    border-bottom: 1px solid #666;
+    line-height: 15px;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    color: #999;
+  }
+  
+  .mm-module sup {
+    font-size: 50%;
+    line-height: 50%;
+    background-color: transparent;
+  }
+  

@@ -1,0 +1,11 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "extends": [
+    "extension:@typescript-eslint/recommended",
+    "plugin:unicorn/recommended"
+  ],
+  "extensions": ["unicorn"],
+  "rules": {
+    "unicorn/filename-case": "error"
+  }
+}

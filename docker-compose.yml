@@ -1,0 +1,30 @@
+version: "3.2"
+
+services:
+  backend:
+    image: node:18.12.1
+    volumes:
+      - .:/app      
+    working_dir: /app/backend
+    user: 1000:1000 #node user
+    command: /app/.docker/run.sh
+
+  web:
+    image: node:18.12.1
+    volumes:
+      - .:/app      
+    working_dir: /app/web
+    user: 1000:1000 #node user
+    command: /app/.docker/run.sh
+
+  test:
+    image: node:18.12.1
+    volumes:
+      - .:/app      
+    ports:
+      - 3000:3000
+    environment:
+      - DEBUG=teletron:*
+    working_dir: /app/tests/run
+    user: 1000:1000 #node user
+    command: npm run watch
