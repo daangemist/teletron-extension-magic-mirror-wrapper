@@ -6,6 +6,7 @@ This module uses parts of the magic mirror repository. When a new version of mag
 can update these dependencies using the script below.
 
 ```bash
+cd backend
 rm -rf ./magic-mirror/*.*
 mkdir /tmp/mm-clone
 cd /tmp/mm-clone
