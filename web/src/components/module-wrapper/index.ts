@@ -12,7 +12,7 @@ function getModuleName(componentType: string): string {
 
 export default function renderModule(
   parent: HTMLElement,
-  { componentType, configuration }: TeletronPropsComponent
+  { componentType, ...configuration }: TeletronPropsComponent
 ): RenderableReturn {
   let module: Module;
 
@@ -27,7 +27,7 @@ export default function renderModule(
       if (isUnloaded) {
         // The module was already unloaded after initialized, so we don't append this child.
         debugLog(
-          'The module was already unloaded after we retrieved the DOM, so we are ignored the retrieved elem.',
+          'The module was already unloaded after we retrieved the DOM, so we are ignored the retrieved elemement.',
           moduleDomElement
         );
         return;

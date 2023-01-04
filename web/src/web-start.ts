@@ -1,14 +1,14 @@
 import type { WebStart } from 'teletron';
 
-let webStart: WebStart;
+let webStarts: Record<string, WebStart> = {};
 
-export const setWebStart = (ws: WebStart) => {
-  webStart = ws;
+export const setWebStart = (module: string, ws: WebStart) => {
+  webStarts[module] = ws;
 };
 
-export const getWebStart = () => {
-  if (!webStart) {
-    throw new Error('WebStart was not set.');
+export const getWebStart = (module: string): WebStart => {
+  if (typeof webStarts[module] === 'undefined') {
+    throw new Error(`WebStart was not set for ${module}`);
   }
-  return webStart;
+  return webStarts[module] as WebStart;
 };

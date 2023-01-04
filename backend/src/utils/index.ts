@@ -1,11 +1,12 @@
 import { promisify } from 'util';
+import fs from 'node:fs/promises';
 import type { Response } from 'express';
 import path from 'path';
 import Debug from 'debug';
 
 const debug = Debug('teletron:extensions:magic-mirror-wrapper:utils');
 
-function checkBasePath(combinedPath: string, basePath: string): void {
+export function checkBasePath(combinedPath: string, basePath: string): void {
   if (combinedPath.substring(0, basePath.length) !== basePath) {
     console.error('Basepath escaping detected.', basePath, combinedPath);
     throw new Error('Attempt at basepath escaping detected.');
@@ -43,5 +44,18 @@ export async function sendFileWithFallback(
   } catch (error) {
     debug('Unable to serve file %s', filename);
     res.status(404).send('File not found.');
+  }
+}
+
+export async function hasNodeHelper(
+  moduleSourcePath: string
+): Promise<boolean> {
+  const nodeHelperPath = path.join(moduleSourcePath, 'node_helper.js');
+  try {
+    await fs.access(nodeHelperPath, fs.constants.R_OK);
+    return true;
+  } catch (error) {
+    debug('Unable to find node_helper.js at', nodeHelperPath);
+    return false;
   }
 }

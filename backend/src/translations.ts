@@ -20,7 +20,7 @@ async function loadTranslations(): Promise<void> {
   try {
     const translationsPath = path.join(
       translationLocation,
-      translationLanguage
+      `${translationLanguage}.json`
     );
     const { default: fetchedTranslations } = await import(translationsPath);
     if (!fetchedTranslations) {

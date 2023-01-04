@@ -1,7 +1,7 @@
 /* global magicMirrorWrapperWeb */
 'use strict';
 
-function createMockTeletronWebStart(extensionName, moduleName) {
+function createMockTeletronWebStart(extensionName) {
   const httpPrefix = '/extensions/' + extensionName;
   return {
     messages: {
@@ -12,7 +12,7 @@ function createMockTeletronWebStart(extensionName, moduleName) {
         console.log('MESSAGES.SUBSCRIBE', args);
         return [
           function (...args) {
-            console.log(DISPATCH, args);
+            console.log('DISPATCH', args);
           },
         ];
       },
@@ -25,11 +25,11 @@ function createMockTeletronWebStart(extensionName, moduleName) {
       },
     },
     registerComponent: function (moduleName, renderer) {
-      renderer(document.getElementById('container-simple'), {
-        componentType: `simple.${moduleName}`,
-        configuration: {
-          foo: 'bar',
-        },
+      renderer(document.getElementById(`container-${moduleName}`), {
+        componentType: `${extensionName}.${moduleName}`,
+        foo: 'bar',
+        actualModuleName: moduleName,
+        actualExtensionName: extensionName,
       });
     },
   };
@@ -40,6 +40,11 @@ async function localStart() {
     createMockTeletronWebStart('simple'),
     'simple',
     'simple'
+  );
+  magicMirrorWrapperWeb.start(
+    createMockTeletronWebStart('mm-advanced'),
+    'advanced',
+    'advanced'
   );
 }
 localStart();

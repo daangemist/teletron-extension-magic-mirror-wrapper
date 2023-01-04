@@ -5,6 +5,7 @@ import './class';
 import { setWebStart } from './web-start';
 import { loader } from './module';
 import './assets/magicmirror.css';
+import { debugLog } from './log';
 
 // @ts-expect-error
 window.config = {
@@ -20,7 +21,8 @@ export async function start(
   componentName: string,
   module: string
 ) {
-  setWebStart(teletron);
+  debugLog('Starting Magic Mirror module initialization for', module);
+  setWebStart(module, teletron);
   await loader(teletron, [module]);
   teletron.registerComponent(componentName, moduleWrapper);
 

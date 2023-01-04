@@ -154,10 +154,10 @@ function loadScript(script: string, moduleName: string): void {
   // This is the first module requesting the script (and nothing is pending), append it to the body and queue for the onload.
   pendingScript = scriptId;
   if (vendors.includes(script)) {
-    insertScript(`${getWebStart().http.PREFIX}/vendor/${script}`);
+    insertScript(`${getWebStart(moduleName).http.PREFIX}/vendor/${script}`);
   } else {
     // the script is a module script.
-    insertScript(`${getWebStart().http.PREFIX}/module/${script}`);
+    insertScript(`${getWebStart(moduleName).http.PREFIX}/module/${script}`);
   }
 }
 
@@ -216,7 +216,7 @@ export class Module {
         typeof config['classes'] !== 'undefined'
           ? config['classes'] + ' ' + this.name
           : this.name,
-      path: `${getWebStart().http.PREFIX}/module`,
+      path: `${getWebStart(this.name).http.PREFIX}/module/`,
     };
     this.uniqueIdentifier = `${this.uniqueIdentifier}-${config['type']}`;
   }
@@ -308,15 +308,17 @@ export class Module {
           const link = document.createElement('link');
           link.rel = 'stylesheet';
           link.href = `${
-            getWebStart().http.PREFIX
-          }/assets/vendor/${stylesheet}`;
+            getWebStart(this.name).http.PREFIX
+          }/vendor/${stylesheet}`;
           link.type = 'text/css';
           link.id = stylesheetId;
           document.head.appendChild(link);
         } else if (!vendors.includes(stylesheet)) {
           const link = document.createElement('link');
           link.rel = 'stylesheet';
-          link.href = `${getWebStart().http.PREFIX}/module/${stylesheet}`;
+          link.href = `${
+            getWebStart(this.name).http.PREFIX
+          }/module/${stylesheet}`;
           link.type = 'text/css';
           link.id = stylesheetId;
           document.head.appendChild(link);
@@ -528,7 +530,7 @@ export class Module {
 
     debugLog('Initializing new nunjucks environment.');
     this._nunjucksEnvironment = new nunjucks.Environment(
-      new nunjucks.WebLoader(`${getWebStart().http.PREFIX}/module/`, {
+      new nunjucks.WebLoader(`${getWebStart(this.name).http.PREFIX}/module`, {
         async: true,
       }),
       {
@@ -557,141 +559,163 @@ const pendingModuleRegistrations: Record<
   Array<(module: Module) => void>
 > = {};
 
-/** We register a global Module class, which MagicMirror modules will use to register themselves. */
+/** We register a global Module class, which MagicMirror modules will use to register themselves, but only if  */
 // @ts-expect-error TS warn on setting a global.
-window.Module = (() => {
-  const registeredModules: Record<string, ModuleProperties> = {};
-  const initializedModules: Module[] = [];
-  let socketDispatch: undefined | ((key: string, payload: any) => void);
-  let coreTranslations: Record<string, string> | undefined;
+if (typeof window.Module === 'undefined') {
+  // @ts-expect-error TS warn on setting a global.
+  window.Module = (() => {
+    const registeredModules: Record<string, ModuleProperties> = {};
+    const initializedModules: Module[] = [];
+    let socketDispatch: undefined | ((key: string, payload: any) => void);
+    let coreTranslations: Record<string, string> | undefined;
 
-  function register(name: string, moduleDefinition: ModuleProperties) {
-    debugLog('Registering a new module', name, moduleDefinition);
-    registeredModules[name] = moduleDefinition;
-    if (Array.isArray(pendingModuleRegistrations[name])) {
-      const callbacks = pendingModuleRegistrations[name] ?? [];
-      delete pendingModuleRegistrations[name];
-      callbacks.forEach((callback) =>
-        // @ts-expect-error We know here the the module has been made available, and a Module is returned, not a promise.
-        callback(getNewlyInitializedModule(name))
-      );
-    }
-  }
-
-  async function getTranslatorForModule(
-    moduleName: string
-  ): Promise<Translator> {
-    debugLog('Fetching translations for module', moduleName);
-    // See if the core Translations have been fetched before, if not, fetch them.
-    if (typeof coreTranslations === 'undefined') {
-      debugLog('Additionally fetching translations for core');
-      coreTranslations = {}; // Its no longer undefined, so another module won't fetch them.
-      const { data } = await getTranslations('core');
-      coreTranslations = data;
+    function register(name: string, moduleDefinition: ModuleProperties) {
+      debugLog('Registering a new module', name, moduleDefinition);
+      registeredModules[name] = moduleDefinition;
+      if (Array.isArray(pendingModuleRegistrations[name])) {
+        const callbacks = pendingModuleRegistrations[name] ?? [];
+        delete pendingModuleRegistrations[name];
+        callbacks.forEach((callback) =>
+          // @ts-expect-error We know here the the module has been made available, and a Module is returned, not a promise.
+          callback(getNewlyInitializedModule(name))
+        );
+      }
     }
 
-    const { data: moduleTranslations } = await getTranslations(moduleName);
-    debugLog(
-      'Initialization translator',
-      moduleName,
-      coreTranslations,
-      moduleTranslations
-    );
-    return new Translator(coreTranslations, moduleTranslations);
-  }
+    async function getTranslatorForModule(
+      moduleName: string
+    ): Promise<Translator> {
+      debugLog('Fetching translations for module', moduleName);
+      // See if the core Translations have been fetched before, if not, fetch them.
+      if (typeof coreTranslations === 'undefined') {
+        debugLog('Additionally fetching translations for core');
+        coreTranslations = {}; // Its no longer undefined, so another module won't fetch them.
+        const { data } = await getTranslations('core');
+        coreTranslations = data;
+      }
 
-  async function getTranslations(
-    moduleName: string
-  ): Promise<{ data: Record<string, string> }> {
-    try {
-      const translations = await getWebStart().http.get<{
-        data: Record<string, string>;
-      }>('/translations/module');
-      return translations;
-    } catch (error) {
-      console.error('Unable to fetch translations.', moduleName, error);
-      return { data: {} };
-    }
-  }
-
-  async function createModule(
-    name: string,
-    configuration: any
-  ): Promise<Module> {
-    if (!registeredModules[name]) {
-      // The module is not registered yet, return a promise and register a callback to be fulfilled later.
+      const { data: moduleTranslations } = await getTranslations(moduleName);
       debugLog(
-        'The module',
-        name,
-        ' is not registered yet, returning a promise to be resolved later when its available.'
+        'Initialization translator',
+        moduleName,
+        coreTranslations,
+        moduleTranslations
       );
-      return new Promise((resolve, _reject) => {
-        const callback = (module: Module) => {
-          debugLog('Resolving module.', name);
-          resolve(module);
-        };
-        if (!Array.isArray(pendingModuleRegistrations[name])) {
-          pendingModuleRegistrations[name] = [];
+      return new Translator(coreTranslations, moduleTranslations);
+    }
+
+    async function getTranslations(
+      moduleName: string
+    ): Promise<{ data: Record<string, string> }> {
+      try {
+        const webStartModule =
+          moduleName === 'core'
+            ? Object.keys(registeredModules)[0]
+            : moduleName;
+        debugLog('Using', webStartModule, 'as module name.');
+        const translations = await getWebStart(
+          // @ts-ignore If we are fetching core, we don't have the actual module name for the getWebStart(), so we use the first available module.
+          webStartModule
+        ).http.get<{
+          data: Record<string, string>;
+        }>(
+          moduleName === 'core' ? '/translations/core' : '/translations/module'
+        );
+        return translations;
+      } catch (error) {
+        console.error('Unable to fetch translations.', moduleName, error);
+        return { data: {} };
+      }
+    }
+
+    async function createModule(
+      name: string,
+      configuration: any
+    ): Promise<Module> {
+      if (!registeredModules[name]) {
+        // The module is not registered yet, return a promise and register a callback to be fulfilled later.
+        debugLog(
+          'The module',
+          name,
+          ' is not registered yet, returning a promise to be resolved later when its available.'
+        );
+        return new Promise((resolve, _reject) => {
+          const callback = (module: Module) => {
+            debugLog('Resolving module.', name);
+            resolve(module);
+          };
+          if (!Array.isArray(pendingModuleRegistrations[name])) {
+            pendingModuleRegistrations[name] = [];
+          }
+          // @ts-ignore We know that pendingModuleRegistrations[name] is an array.
+          pendingModuleRegistrations[name].push(callback);
+        });
+      }
+
+      debugLog('Creating new module', name);
+      const moduleDefinition = registeredModules[name] ?? {};
+
+      const module = new Module(
+        name,
+        { ...moduleDefinition }, // We are binding all registered functions to the module, so we need a unique function per initialized module.
+        await getTranslatorForModule(name),
+        triggerNotification,
+        (notification: string, payload: any) => {
+          if (!socketDispatch) {
+            throw new Error('Socket dispatch was not set.');
+          }
+          socketDispatch(notification, payload);
         }
-        // @ts-ignore We know that pendingModuleRegistrations[name] is an array.
-        pendingModuleRegistrations[name].push(callback);
+      );
+      Object.entries(moduleDefinition).forEach(
+        ([key, value]: [string, any]) => {
+          // @ts-expect-error
+          module[key] = value;
+        }
+      );
+      module.setConfig(configuration);
+      await module.initAndStart();
+
+      initializedModules.push(module);
+      return module;
+    }
+
+    function triggerNotification(
+      notification: string,
+      payload: any,
+      sender?: Module
+    ) {
+      initializedModules.forEach((module) => {
+        module.triggerNotification(notification, payload, sender);
       });
     }
 
-    debugLog('Creating new module', name);
-    const moduleDefinition = registeredModules[name] ?? {};
+    function triggerSocketNotification(notification: string, payload: any) {
+      debugLog('Received socket notification', notification, payload);
+      initializedModules.forEach((module) => {
+        module.triggerSocketNotificationReceived(notification, payload);
+      });
+    }
 
-    const module = new Module(
-      name,
-      { ...moduleDefinition }, // We are binding all registered functions to the module, so we need a unique function per initialized module.
-      await getTranslatorForModule(name),
-      triggerNotification,
-      (notification: string, payload: any) => {
-        if (!socketDispatch) {
-          throw new Error('Socket dispatch was not set.');
-        }
-        socketDispatch(notification, payload);
-      }
-    );
-    Object.entries(moduleDefinition).forEach(([key, value]: [string, any]) => {
-      // @ts-expect-error
-      module[key] = value;
-    });
-    module.setConfig(configuration);
-    await module.initAndStart();
+    function setSocketDispatch(dispatch: (key: string, payload: any) => void) {
+      socketDispatch = dispatch;
+    }
 
-    initializedModules.push(module);
-    return module;
-  }
-
-  function triggerNotification(
-    notification: string,
-    payload: any,
-    sender?: Module
-  ) {
-    initializedModules.forEach((module) => {
-      module.triggerNotification(notification, payload, sender);
-    });
-  }
-
-  function triggerSocketNotification(notification: string, payload: any) {
-    debugLog('Received socket notification', notification, payload);
-    initializedModules.forEach((module) => {
-      module.triggerSocketNotificationReceived(notification, payload);
-    });
-  }
-
-  function setSocketDispatch(dispatch: (key: string, payload: any) => void) {
-    socketDispatch = dispatch;
-  }
-
-  return {
-    register,
-    createModule,
-    triggerSocketNotification,
-    setSocketDispatch,
-  };
-})();
+    return {
+      register,
+      createModule,
+      triggerSocketNotification,
+      setSocketDispatch,
+    };
+  })();
+} else {
+  console.log(
+    'windows.Module was already defined. Not overwriting, reusing the existing one, this could lead to strange behavior if the wrapper versions are not compatible.'
+  );
+}
 
 // @ts-expect-error Define the magic mirror console wrapper
-window.Log = console;
+if (typeof Window.Log === 'undefined') {
+  // @ts-expect-error Define the magic mirror Log function
+  window.Log = console;
+}
