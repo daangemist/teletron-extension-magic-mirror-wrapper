@@ -1,14 +1,19 @@
 import type { WebStart } from 'teletron';
 
-let webStarts: Record<string, WebStart> = {};
-
 export const setWebStart = (module: string, ws: WebStart) => {
-  webStarts[module] = ws;
+  if (typeof window.webStarts === 'undefined') {
+    window.webStarts = {};
+  }
+
+  window.webStarts[module] = ws;
 };
 
 export const getWebStart = (module: string): WebStart => {
-  if (typeof webStarts[module] === 'undefined') {
+  if (
+    typeof window.webStarts === 'undefined' ||
+    typeof window.webStarts[module] === 'undefined'
+  ) {
     throw new Error(`WebStart was not set for ${module}`);
   }
-  return webStarts[module] as WebStart;
+  return window.webStarts[module] as WebStart;
 };

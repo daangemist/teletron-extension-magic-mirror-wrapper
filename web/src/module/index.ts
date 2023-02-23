@@ -560,7 +560,6 @@ const pendingModuleRegistrations: Record<
 > = {};
 
 /** We register a global Module class, which MagicMirror modules will use to register themselves, but only if  */
-// @ts-expect-error TS warn on setting a global.
 if (typeof window.Module === 'undefined') {
   // @ts-expect-error TS warn on setting a global.
   window.Module = (() => {

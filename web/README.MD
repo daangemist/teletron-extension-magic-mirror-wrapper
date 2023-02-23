@@ -27,16 +27,18 @@ Then create a script, and have that script served by the backend wrapper (as exp
 // web.js
 
 // Invoke the teletronRegisterExtension global to register the module.
-async function extensionStart() {
-  if (typeof magicMirrorWrapperWeb === 'undefined') {
-    // Wait until the magicMirrorWrap global is available
-    setTimeout(() => extensionStart(), 100);
-    return;
+(function () {
+  function extensionStart() {
+    if (typeof magicMirrorWrapperWeb === 'undefined') {
+      // Wait until the magicMirrorWrap global is available
+      setTimeout(() => extensionStart(), 100);
+      return;
+    }
+    const teletron = window.teletronRegisterExtension('extension-name');
+    magicMirrorWrapperWeb.start(teletron, 'component-name', 'module-name');
   }
-  const teletron = window.teletronRegisterExtension('extension-name');
-  magicMirrorWrapperWeb.start(teletron, 'component-name', 'module-name');
-}
-extensionStart();
+  extensionStart();
+})();
 ```
 
 Update the backend code for the extension accordingly, so that it will load the css and js file that you
